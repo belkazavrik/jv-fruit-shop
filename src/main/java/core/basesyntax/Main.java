@@ -1,32 +1,55 @@
 package core.basesyntax;
 
-import core.basesyntax.service.FruitService;
-import core.basesyntax.service.FruitServiceImpl;
-import core.basesyntax.service.Operation;
-import core.basesyntax.service.strategy.BalanceOperation;
-import core.basesyntax.service.strategy.OperationHandler;
-import core.basesyntax.service.strategy.OperationStrategy;
-import core.basesyntax.service.strategy.OperationStrategyImpl;
-import core.basesyntax.service.strategy.PurchaseOperation;
-import core.basesyntax.service.strategy.ReturnOperation;
-import core.basesyntax.service.strategy.SupplyOperation;
+import core.basesyntax.dao.FruitDao;
+import core.basesyntax.dao.FruitDaoImpl;
+import core.basesyntax.model.FruitTransaction;
+import core.basesyntax.service.DataConverter;
+import core.basesyntax.service.DataConverterImpl;
+import core.basesyntax.service.FileReader;
+import core.basesyntax.service.FileReaderImpl;
+import core.basesyntax.service.FileWriter;
+import core.basesyntax.service.FileWriterImpl;
+import core.basesyntax.service.ReportGenerator;
+import core.basesyntax.service.ReportGeneratorImpl;
+import core.basesyntax.service.ShopService;
+import core.basesyntax.service.ShopServiceImpl;
+import core.basesyntax.strategy.BalanceOperation;
+import core.basesyntax.strategy.OperationHandler;
+import core.basesyntax.strategy.OperationStrategy;
+import core.basesyntax.strategy.OperationStrategyImpl;
+import core.basesyntax.strategy.PurchaseOperation;
+import core.basesyntax.strategy.ReturnOperation;
+import core.basesyntax.strategy.SupplyOperation;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
+    private static final String INPUT_FILE = "src/main/resources/input.csv";
+    private static final String OUTPUT_FILE = "src/main/resources/finalReport.csv";
+
     public static void main(String[] args) {
+        FileReader fileReader = new FileReaderImpl();
+        List<String> inputLines = fileReader.read(INPUT_FILE);
 
-        Map<Operation, OperationHandler> operationHandlers = new HashMap<>();
-        operationHandlers.put(Operation.BALANCE, new BalanceOperation());
-        operationHandlers.put(Operation.SUPPLY, new SupplyOperation());
-        operationHandlers.put(Operation.RETURN, new ReturnOperation());
-        operationHandlers.put(Operation.PURCHASE, new PurchaseOperation());
+        DataConverter dataConverter = new DataConverterImpl();
+        List<FruitTransaction> transactions = dataConverter.convertToTransaction(inputLines);
 
-        OperationStrategy operationStrategy = new OperationStrategyImpl(operationHandlers);
+        Map<FruitTransaction.Operation, OperationHandler> handlers = new HashMap<>();
+        handlers.put(FruitTransaction.Operation.BALANCE, new BalanceOperation());
+        handlers.put(FruitTransaction.Operation.SUPPLY, new SupplyOperation());
+        handlers.put(FruitTransaction.Operation.RETURN, new ReturnOperation());
+        handlers.put(FruitTransaction.Operation.PURCHASE, new PurchaseOperation());
 
-        FruitService fruitService = new FruitServiceImpl(operationStrategy);
+        OperationStrategy operationStrategy = new OperationStrategyImpl(handlers);
+        FruitDao fruitDao = new FruitDaoImpl();
+        ShopService shopService = new ShopServiceImpl(fruitDao, operationStrategy);
+        shopService.process(transactions);
 
-        fruitService.process("C:\\Users\\admin\\jv-fruit-shop"
-                + "\\src\\main\\java\\core\\basesyntax\\input.csv");
+        ReportGenerator reportGenerator = new ReportGeneratorImpl();
+        String report = reportGenerator.getReport();
+
+        FileWriter fileWriter = new FileWriterImpl();
+        fileWriter.write(report, OUTPUT_FILE);
     }
 }

@@ -24,12 +24,4 @@ public class Fruit {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-
-    @Override
-    public String toString() {
-        return ""
-                + "name: " + name + ", "
-                + "quantity: " + quantity
-                ;
-    }
 }

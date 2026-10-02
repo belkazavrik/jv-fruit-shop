@@ -6,13 +6,13 @@ import java.util.Optional;
 
 public class FruitDaoImpl implements FruitDao {
     @Override
-    public void addFruit(Fruit fruit) {
-        Storage.fruits.add(fruit);
+    public void add(Fruit fruit) {
+        Storage.getFruits().add(fruit);
     }
 
     @Override
     public Optional<Fruit> getByName(String name) {
-        for (Fruit fruit: Storage.fruits) {
+        for (Fruit fruit : Storage.getFruits()) {
             if (fruit.getName().equals(name)) {
                 return Optional.of(fruit);
             }
