@@ -3,6 +3,8 @@ package core.basesyntax.service;
 import core.basesyntax.dao.FruitDao;
 import core.basesyntax.dao.FruitDaoImpl;
 import core.basesyntax.model.Fruit;
+import core.basesyntax.service.strategy.OperationHandler;
+import core.basesyntax.service.strategy.OperationStrategy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +14,11 @@ import java.util.Optional;
 public class FruitServiceImpl implements FruitService {
 
     private final FruitDao fruitDao = new FruitDaoImpl();
+    private final OperationStrategy operationStrategy;
+
+    public FruitServiceImpl(OperationStrategy operationStrategy) {
+        this.operationStrategy = operationStrategy;
+    }
 
     @Override
     public List<String> readFile(String path) {
@@ -33,47 +40,25 @@ public class FruitServiceImpl implements FruitService {
         String name = parts[1].trim();
         int quantity = Integer.parseInt(parts[2].trim());
 
-        Optional<Fruit> existingFruit = fruitDao.getByName(name);
-
         if (quantity < 0) {
             throw new RuntimeException("Quantity cannot be negative");
         }
 
-        switch (operationCode) {
-            case BALANCE:
-            case SUPPLY:
-                if (existingFruit.isPresent()) {
-                    Fruit fruit = existingFruit.get();
-                    fruit.setQuantity(fruit.getQuantity() + quantity);
-                } else {
-                    fruitDao.addFruit(new Fruit(name, quantity));
-                }
-                break;
-            case RETURN:
-                if (existingFruit.isPresent()) {
-                    Fruit fruit = existingFruit.get();
-                    fruit.setQuantity(fruit.getQuantity() + quantity);
-                } else {
-                    throw new RuntimeException("Cannot return a "
-                            + name + " because it is not in the list");
-                }
-                break;
-            case PURCHASE:
-                if (existingFruit.isPresent()) {
-                    Fruit fruit = existingFruit.get();
-                    if (fruit.getQuantity() >= quantity) {
-                        fruit.setQuantity(fruit.getQuantity() - quantity);
-                    } else {
-                        throw new RuntimeException("The quantity in "
-                                + "the store cannot be negative");
-                    }
-                } else {
-                    throw new RuntimeException("The store doesn`t have a " + name + " fruit");
-                }
-                break;
-            default:
-                throw new RuntimeException("Operation is not supported: " + operationCode);
+        Optional<Fruit> existingFruit = fruitDao.getByName(name);
+
+        if ((operationCode == Operation.BALANCE || operationCode == Operation.SUPPLY)
+                && existingFruit.isEmpty()) {
+            fruitDao.addFruit(new Fruit(name, quantity));
+            return;
         }
+
+        if ((operationCode == Operation.RETURN || operationCode == Operation.PURCHASE)
+                && existingFruit.isEmpty()) {
+            throw new RuntimeException("The store doesn't have a " + name + " fruit");
+        }
+        Fruit fruit = existingFruit.get();
+        OperationHandler handler = operationStrategy.get(operationCode);
+        handler.apply(fruit, quantity);
     }
 
     @Override
