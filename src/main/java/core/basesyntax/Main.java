@@ -33,13 +33,14 @@ public class Main {
         List<String> inputLines = fileReader.read(INPUT_FILE);
 
         DataConverter dataConverter = new DataConverterImpl();
-        List<FruitTransaction> transactions = dataConverter.convertToTransaction(inputLines);
 
         Map<FruitTransaction.Operation, OperationHandler> handlers = new HashMap<>();
         handlers.put(FruitTransaction.Operation.BALANCE, new BalanceOperation());
         handlers.put(FruitTransaction.Operation.SUPPLY, new SupplyOperation());
         handlers.put(FruitTransaction.Operation.RETURN, new ReturnOperation());
         handlers.put(FruitTransaction.Operation.PURCHASE, new PurchaseOperation());
+
+        List<FruitTransaction> transactions = dataConverter.convertToTransaction(inputLines);
 
         OperationStrategy operationStrategy = new OperationStrategyImpl(handlers);
         FruitDao fruitDao = new FruitDaoImpl();

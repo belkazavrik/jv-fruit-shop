@@ -26,13 +26,15 @@ public class ShopServiceImpl implements ShopService {
 
             Optional<Fruit> existingFruit = fruitDao.getByName(name);
 
-            if ((operation == FruitTransaction.Operation.BALANCE || operation == FruitTransaction.Operation.SUPPLY)
+            if ((operation == FruitTransaction.Operation.BALANCE
+                    || operation == FruitTransaction.Operation.SUPPLY)
                     && existingFruit.isEmpty()) {
                 fruitDao.add(new Fruit(name, quantity));
                 continue;
             }
 
-            if ((operation == FruitTransaction.Operation.RETURN || operation == FruitTransaction.Operation.PURCHASE)
+            if ((operation == FruitTransaction.Operation.RETURN
+                    || operation == FruitTransaction.Operation.PURCHASE)
                     && existingFruit.isEmpty()) {
                 throw new RuntimeException("Fruit not found in store: " + name);
             }

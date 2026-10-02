@@ -18,7 +18,8 @@ public class DataConverterImpl implements DataConverter {
                 continue;
             }
             String[] parts = line.split(",");
-            FruitTransaction.Operation operation = FruitTransaction.Operation.getOperationByCode(parts[OPERATION_INDEX].trim());
+            FruitTransaction.Operation operation = FruitTransaction.Operation
+                    .getOperationByCode(parts[OPERATION_INDEX].trim());
             String fruitName = parts[FRUIT_INDEX].trim();
             int quantity = Integer.parseInt(parts[QUANTITY_INDEX].trim());
             if (quantity < 0) {
